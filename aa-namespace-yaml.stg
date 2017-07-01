@@ -1,0 +1,13 @@
+/*
+*
+*/
+aa-namespace-yaml(parent, vars) ::= <<
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: graphite-andrea
+  labels:
+    name: graphite-andrea
+    robobeerun.com/group: cluster-graphite
+
+>>

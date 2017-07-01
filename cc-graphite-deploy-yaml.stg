@@ -1,0 +1,146 @@
+/*
+* Mandatory:
+* 
+* vars.graphite.image.name
+* vars.graphite.image.version
+* vars.graphite.limits.cpu
+* vars.graphite.limits.memory
+* vars.graphite.requests.cpu
+* vars.graphite.requests.memory
+* vars.graphite.allowOnMaster
+* 
+* Optional:
+* 
+* vars.graphite.tolerations
+*/
+
+import "tolerations.stg"
+import "affinities.stg"
+
+cc-graphite-deploy-yaml(parent, vars) ::= <<
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: graphite-graphite-storage
+  namespace: graphite-andrea
+  labels:
+    app: graphite
+    robobeerun.com/group: cluster-graphite
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphite
+  namespace: graphite-andrea
+  labels:
+    app: graphite
+    robobeerun.com/group: cluster-graphite
+spec:
+  ports:
+  - name: "http"
+    port: 8080
+    targetPort: 8080
+  - name: "rsync"
+    port: 8873
+    targetPort: 8873
+  - name: "carbon-receiver"
+    port: 2003
+    targetPort: 2003
+    nodePort: 32003
+  - name: "carbon-pickle"
+    port: 2004
+    targetPort: 2004
+  - name: "caron-aggregator"
+    port: 2024
+    targetPort: 2024
+  - name: "statsd"
+    port: 8125
+    targetPort: 8125
+  - name: "statsd-admin"
+    port: 8126
+    targetPort: 8126
+  selector:
+    app: graphite
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: graphite
+  namespace: graphite-andrea
+  labels:
+    app: graphite
+    robobeerun.com/group: cluster-graphite
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: graphite
+        robobeerun.com/group: cluster-graphite
+    spec:
+      containers:
+      - image: <vars.graphite.image.name>:<vars.graphite.image.version>
+        name: graphite
+        ports:
+        - name: "http"
+          containerPort: 8080
+        - name: "rsync"
+          containerPort: 8873
+        - name: "carbon-receiver"
+          containerPort: 2003
+        - name: "carbon-pickle"
+          containerPort: 2004
+        - name: "caron-aggregator"
+          containerPort: 2024
+        - name: "statsd"
+          containerPort: 8125
+        - name: "statsd-admin"
+          containerPort: 8126
+        resources:
+          limits:
+            cpu: <vars.graphite.limits.cpu>
+            memory: <vars.graphite.limits.memory>
+          requests:
+            cpu: <vars.graphite.requests.cpu>
+            memory: <vars.graphite.requests.memory>
+        volumeMounts:
+        - mountPath: /opt/graphite/storage
+          name: graphite-graphite-storage
+        - mountPath: /nginx-in
+          name: nginx-nginx-config
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+      restartPolicy: Always
+      volumes:
+      - name: graphite-graphite-storage
+        persistentVolumeClaim:
+          claimName: graphite-graphite-storage
+      - name: nginx-nginx-config
+        configMap:
+          name: nginx
+<affinitiesGroup(parent, vars)>
+<tolerationMaster(parent, vars)>
+<tolerations(parent, vars, vars.graphite.tolerations)>
+
+---
+
+>>

@@ -1,0 +1,31 @@
+/*
+*
+*/
+xx-graphite-ingress-yaml(parent, vars) ::= <<
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: graphite
+  namespace: graphite-andrea
+  labels:
+    app: graphite
+    robobeerun.com/group: cluster-graphite
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/tls-acme: "true"
+    ingress.kubernetes.io/affinity: "cookie"
+spec:
+  tls:
+  - hosts:
+    - graphite.andrea.muellerpublic.de
+    secretName: tls-secret
+  rules:
+  - host: graphite.andrea.muellerpublic.de
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: graphite
+          servicePort: 8080
+
+>>
