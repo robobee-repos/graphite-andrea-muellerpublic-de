@@ -54,10 +54,6 @@ spec:
   - name: "rsync"
     port: 8873
     targetPort: 8873
-  - name: "carbon-receiver"
-    port: 2003
-    targetPort: 2003
-    nodePort: 32003
   - name: "carbon-pickle"
     port: 2004
     targetPort: 2004
@@ -70,6 +66,26 @@ spec:
   - name: "statsd-admin"
     port: 8126
     targetPort: 8126
+  selector:
+    app: graphite
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: carbon
+  namespace: graphite-andrea
+  labels:
+    app: graphite
+    robobeerun.com/group: cluster-graphite
+spec:
+  type: NodePort
+  ports:
+  - name: "carbon-receiver"
+    port: 2003
+    targetPort: 2003
+    nodePort: 32003
   selector:
     app: graphite
 
