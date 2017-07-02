@@ -82,7 +82,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: "carbon-receiver"
+  - name: "carbon"
     port: 2003
     targetPort: 2003
     nodePort: 32003
