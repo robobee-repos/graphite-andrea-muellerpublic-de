@@ -121,7 +121,7 @@ spec:
           containerPort: 2003
         - name: "carbon-pickle"
           containerPort: 2004
-        - name: "caron-aggregator"
+        - name: "caron-agg"
           containerPort: 2024
         - name: "statsd"
           containerPort: 8125
