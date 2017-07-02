@@ -57,7 +57,7 @@ spec:
   - name: "carbon-pickle"
     port: 2004
     targetPort: 2004
-  - name: "caron-aggregator"
+  - name: "caron-agg"
     port: 2024
     targetPort: 2024
   - name: "statsd"
