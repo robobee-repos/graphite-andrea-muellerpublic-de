@@ -126,6 +126,8 @@ spec:
         - mountPath: /opt/statsd
           name: graphite
           subPath: statsd
+        - mountPath: /graphite-conf-in
+          name: graphite-config
       - image: <vars.nginx.image.name>:<vars.nginx.image.version>
         name: nginx
         env:
@@ -138,13 +140,13 @@ spec:
           tcpSocket:
             port: 8080
           initialDelaySeconds: 10
-          periodSeconds: 60
+          periodSeconds: 10
           timeoutSeconds: 10
         readinessProbe:
           httpGet:
             path: /
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 60
         resources:
           limits:
@@ -167,6 +169,9 @@ spec:
       - name: nginx-config
         configMap:
           name: nginx
+      - name: graphite-config
+        configMap:
+          name: graphite
 <affinitiesGroup(parent, vars, vars.graphite.affinityRequired)>
 <tolerationMaster(parent, vars)>
 <tolerations(parent, vars, vars.graphite.tolerations)>
