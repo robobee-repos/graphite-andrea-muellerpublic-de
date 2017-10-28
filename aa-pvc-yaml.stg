@@ -1,0 +1,21 @@
+/*
+ * Mandatory:
+ *
+ * vars.volume.storage
+ */
+aa-pvc-yaml(parent, vars) ::= <<
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: graphite-andrea
+  namespace: graphite-andrea
+  labels:
+    robobeerun.com/group: graphite
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: <vars.volume.storage>
+
+>>

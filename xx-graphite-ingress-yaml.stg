@@ -1,6 +1,6 @@
 /*
-*
-*/
+ *
+ */
 xx-graphite-ingress-yaml(parent, vars) ::= <<
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -9,7 +9,7 @@ metadata:
   namespace: graphite-andrea
   labels:
     app: graphite
-    robobeerun.com/group: cluster-graphite
+    robobeerun.com/group: graphite
   annotations:
     kubernetes.io/ingress.class: "nginx"
     kubernetes.io/tls-acme: "true"

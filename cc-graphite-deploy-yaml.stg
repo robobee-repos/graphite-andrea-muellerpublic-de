@@ -1,40 +1,30 @@
 /*
-* Mandatory:
-* 
-* vars.graphite.image.name
-* vars.graphite.image.version
-* vars.graphite.limits.cpu
-* vars.graphite.limits.memory
-* vars.graphite.requests.cpu
-* vars.graphite.requests.memory
-* vars.graphite.allowOnMaster
-* 
-* Optional:
-* 
-* vars.graphite.tolerations
-*/
+ * Mandatory:
+ *
+ * vars.graphite.image.name
+ * vars.graphite.image.version
+ * vars.graphite.limits.cpu
+ * vars.graphite.limits.memory
+ * vars.graphite.requests.cpu
+ * vars.graphite.requests.memory
+ * vars.graphite.allowOnMaster
+ * vars.nginx.image.name
+ * vars.nginx.image.version
+ * vars.nginx.limits.cpu
+ * vars.nginx.limits.memory
+ * vars.nginx.requests.cpu
+ * vars.nginx.requests.memory
+ *
+ * Optional:
+ *
+ * vars.graphite.affinityRequired
+ * vars.graphite.tolerations
+ */
 
 import "tolerations.stg"
 import "affinities.stg"
 
 cc-graphite-deploy-yaml(parent, vars) ::= <<
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: graphite-graphite-storage
-  namespace: graphite-andrea
-  labels:
-    app: graphite
-    robobeerun.com/group: cluster-graphite
-spec:
-  accessModes:
-  - ReadWriteMany
-  resources:
-    requests:
-      storage: 2Gi
 
 ---
 
@@ -45,15 +35,12 @@ metadata:
   namespace: graphite-andrea
   labels:
     app: graphite
-    robobeerun.com/group: cluster-graphite
+    robobeerun.com/group: graphite
 spec:
   ports:
   - name: "http"
     port: 8080
     targetPort: 8080
-  - name: "rsync"
-    port: 8873
-    targetPort: 8873
   - name: "carbon-pickle"
     port: 2004
     targetPort: 2004
@@ -78,7 +65,7 @@ metadata:
   namespace: graphite-andrea
   labels:
     app: graphite
-    robobeerun.com/group: cluster-graphite
+    robobeerun.com/group: graphite
 spec:
   type: NodePort
   ports:
@@ -98,7 +85,7 @@ metadata:
   namespace: graphite-andrea
   labels:
     app: graphite
-    robobeerun.com/group: cluster-graphite
+    robobeerun.com/group: graphite
 spec:
   replicas: 1
   strategy:
@@ -107,7 +94,7 @@ spec:
     metadata:
       labels:
         app: graphite
-        robobeerun.com/group: cluster-graphite
+        robobeerun.com/group: graphite
     spec:
       containers:
       - image: <vars.graphite.image.name>:<vars.graphite.image.version>
@@ -115,8 +102,6 @@ spec:
         ports:
         - name: "http"
           containerPort: 8080
-        - name: "rsync"
-          containerPort: 8873
         - name: "carbon-receiver"
           containerPort: 2003
         - name: "carbon-pickle"
@@ -135,25 +120,54 @@ spec:
             cpu: <vars.graphite.requests.cpu>
             memory: <vars.graphite.requests.memory>
         volumeMounts:
-        - mountPath: /opt/graphite/storage
-          name: graphite-graphite-storage
-        - mountPath: /nginx-in
-          name: nginx-nginx-config
+        - mountPath: /opt/graphite
+          name: graphite
+          subPath: graphite
+        - mountPath: /opt/statsd
+          name: graphite
+          subPath: statsd
+      - image: <vars.nginx.image.name>:<vars.nginx.image.version>
+        name: nginx
+        env:
+        - name: NGINX_HTTP_PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+          name: "http"
         livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 60
+          timeoutSeconds: 10
+        readinessProbe:
           httpGet:
             path: /
             port: 8080
           initialDelaySeconds: 60
-          periodSeconds: 10
+          periodSeconds: 60
+        resources:
+          limits:
+            cpu: <vars.nginx.limits.cpu>
+            memory: <vars.nginx.limits.memory>
+          requests:
+            cpu: <vars.nginx.requests.cpu>
+            memory: <vars.nginx.requests.memory>
+        volumeMounts:
+        - mountPath: /opt/graphite
+          name: graphite
+          subPath: graphite
+        - mountPath: /nginx-in
+          name: nginx-config
       restartPolicy: Always
       volumes:
-      - name: graphite-graphite-storage
+      - name: graphite
         persistentVolumeClaim:
-          claimName: graphite-graphite-storage
-      - name: nginx-nginx-config
+          claimName: graphite-andrea
+      - name: nginx-config
         configMap:
           name: nginx
-<affinitiesGroup(parent, vars)>
+<affinitiesGroup(parent, vars, vars.graphite.affinityRequired)>
 <tolerationMaster(parent, vars)>
 <tolerations(parent, vars, vars.graphite.tolerations)>
 
